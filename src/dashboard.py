@@ -500,6 +500,15 @@ def get_conf_list():
                 )
             """
             g.cur.execute(create_table)
+
+            create_table = f"""
+                            CREATE TABLE IF NOT EXISTS {i}_peers_revoked (                            
+                                id VARCHAR NOT NULL, allowed_ip VARCHAR NULL,
+                                PRIMARY KEY (id)
+                            )
+                        """
+            g.cur.execute(create_table)
+
             temp = {"conf": i, "status": get_conf_status(i), "public_key": get_conf_pub_key(i)}
             if temp['status'] == "running":
                 temp['checked'] = 'checked'
@@ -595,6 +604,9 @@ def f_available_ips(config_name):
             add, sub = i.split("/")
             existed.append(ipaddress.ip_address(add))
         peers = g.cur.execute("SELECT allowed_ip FROM " + config_name).fetchall()
+        peers_revoked = g.cur.execute("SELECT allowed_ip FROM " + config_name + '_peers_revoked').fetchall()
+        peers = peers + peers_revoked
+
         for i in peers:
             add = i[0].split(",")
             for k in add:
@@ -607,6 +619,9 @@ def f_available_ips(config_name):
             except ValueError:
                 pass
         available = [str(i) for i in available]
+
+
+
         return available
     else:
         return []
@@ -1107,7 +1122,7 @@ def add_peer_bulk(config_name):
     wg_command = ["wg", "set", config_name]
     sql_command = []
     for i in range(amount):
-        keys[i]['name'] = f"{config_name}_{datetime.now().strftime('%m%d%Y%H%M%S')}_Peer_#_{(i + 1)}"
+        keys[i]['name'] = f"{config_name}_{datetime.now().strftime('%m%d%Y%H%M%S')}_Peer_{(i + 1)}"
         wg_command.append("peer")
         wg_command.append(keys[i]['publicKey'])
         keys[i]['allowed_ips'] = ips.pop(0)
@@ -1156,6 +1171,7 @@ def add_peer(config_name):
     enable_preshared_key = data["enable_preshared_key"]
     preshared_key = data['preshared_key']
     keys = get_conf_peer_key(config_name)
+
     if len(public_key) == 0 or len(dns_addresses) == 0 or len(allowed_ips) == 0 or len(endpoint_allowed_ip) == 0:
         return "Please fill in all required box."
     if not isinstance(keys, list):
@@ -1245,16 +1261,53 @@ def active(config_name):
     data = request.get_json()
     peer_id = data['id']
 
-    result = g.cur.execute("SELECT active FROM "+ config_name + " WHERE id = ?", (peer_id,)).fetchone()
+    result = g.cur.execute("SELECT allowed_ip, active FROM "+ config_name + " WHERE id = ?", (peer_id,)).fetchone()
+    peers_revoked = g.cur.execute("SELECT allowed_ip FROM " + config_name + "_peers_revoked WHERE id = ?", (peer_id,)).fetchone()
 
-    if result[0] == 1:
+    allowed_ips = result[0]
+
+    if result[1] == 1:
         status_active = 0
     else:
         status_active = 1
 
     try:
-        sql = "UPDATE " + config_name + " SET active = ? WHERE id = ?"
-        g.cur.execute(sql, (status_active, peer_id))
+        if status_active == 1:
+
+            if len(peers_revoked) == 1:
+                ip_revoked = peers_revoked[0]
+                g.cur.execute("DELETE FROM " + config_name + "_peers_revoked WHERE id = ?", (peer_id,))
+
+                status = subprocess.check_output(f"wg set {config_name} peer {peer_id} allowed-ips {ip_revoked}", shell=True, stderr=subprocess.STDOUT)
+                status = subprocess.check_output("wg-quick save " + config_name, shell=True, stderr=subprocess.STDOUT)
+
+            sql = "UPDATE " + config_name + " SET endpoint_allowed_ip = ?, active = ? WHERE id = ?"
+            g.cur.execute(sql, ('0.0.0.0/0', status_active, peer_id))
+        else:
+            # wg_command = ["wg", "set", config_name]
+            # wg_command.append("peer")
+            # wg_command.append(peer_id)
+            # wg_command.append("remove")
+            # remove_wg = subprocess.check_output(" ".join(wg_command), shell=True, stderr=subprocess.STDOUT)
+            # save_wg = subprocess.check_output(f"wg-quick save {config_name}", shell=True, stderr=subprocess.STDOUT)
+
+            if len(peers_revoked) == 0:
+                new_data = {
+                    "id": peer_id,
+                    "allowed_ip": allowed_ips,
+                }
+                sql = f"""
+                            INSERT INTO {config_name} _peers_revoked
+                                VALUES (:id, :allowed_ip);
+                            """
+                g.cur.execute(sql, new_data)
+
+            # sql = "UPDATE " + config_name + "_peers_revoked SET endpoint_allowed_ip = ?, active = ? WHERE id = ?"
+            # g.cur.execute(sql, ('0.0.0.0/0', status_active, peer_id))
+
+            status = subprocess.check_output(f"wg set {config_name} peer {peer_id} allowed-ips 10.7.0.4/1", shell=True, stderr=subprocess.STDOUT)
+            status = subprocess.check_output("wg-quick save " + config_name, shell=True, stderr=subprocess.STDOUT)
+
         return 'ok'
 
     except subprocess.CalledProcessError as exc:
