@@ -1250,7 +1250,7 @@ def active(config_name):
     if result.fetchone() is None:
         print("empty")
     else:
-        if result[0] == 1:
+        if result.fetchone()[0] == 1:
             status_active = 0
         else:
             status_active = 1
