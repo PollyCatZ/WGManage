@@ -559,12 +559,12 @@ document.querySelector(".info").addEventListener("click", (event) => {
 });
 
 
-$(document).on('click', '.switch-active', function (e) {
+$body.on('change', '.switch-active', function (e) {
+
     const id = $(this).data('id');
 
     $.ajax({
         type: "POST",
-        dataType: "json",
         url: "/active",
         headers:{
             "Content-Type": "application/json"
@@ -578,8 +578,6 @@ $(document).on('click', '.switch-active', function (e) {
             $('#alertToast .toast-body').html("Active status Changed!");
         }
     });
-
-    console.log(id);
 });
 
 /**
