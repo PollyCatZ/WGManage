@@ -343,7 +343,8 @@ def get_all_peers_data(config_name):
                     "mtu": config.get("Peers", "peer_mtu"),
                     "keepalive": config.get("Peers", "peer_keep_alive"),
                     "remote_endpoint": config.get("Peers", "remote_endpoint"),
-                    "preshared_key": ""
+                    "preshared_key": "",
+                    "active": "1",
                 }
                 if "PresharedKey" in conf_peer_data['Peers'][i].keys():
                     new_data["preshared_key"] = conf_peer_data['Peers'][i]["PresharedKey"]
@@ -351,7 +352,7 @@ def get_all_peers_data(config_name):
                 INSERT INTO {config_name} 
                     VALUES (:id, :private_key, :DNS, :endpoint_allowed_ip, :name, :total_receive, :total_sent, 
                     :total_data, :endpoint, :status, :latest_handshake, :allowed_ip, :cumu_receive, :cumu_sent, 
-                    :cumu_data, :mtu, :keepalive, :remote_endpoint, :preshared_key);
+                    :cumu_data, :mtu, :keepalive, :remote_endpoint, :preshared_key, :active);
                 """
                 g.cur.execute(sql, new_data)
         else:
