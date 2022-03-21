@@ -562,6 +562,17 @@ document.querySelector(".info").addEventListener("click", (event) => {
 $(document).on('click', '.switch-active', function (e) {
     const id = $(this).data('id');
 
+    $.ajax({
+        type: "POST",
+        dataType: "json",
+        url: "/active",
+        data: {id: id},
+        success: function (data) {
+            $('#alertToast').toast('show');
+            $('#alertToast .toast-body').html("Active status Changed!");
+        }
+    });
+
     console.log(id);
 });
 
