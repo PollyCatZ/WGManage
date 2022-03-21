@@ -566,8 +566,14 @@ $(document).on('click', '.switch-active', function (e) {
         type: "POST",
         dataType: "json",
         url: "/active",
-        data: {id: id},
+        headers:{
+            "Content-Type": "application/json"
+        },
+        data: JSON.stringify({
+            "id":id
+        }),
         success: function (data) {
+            console.log(data);
             $('#alertToast').toast('show');
             $('#alertToast .toast-body').html("Active status Changed!");
         }
