@@ -1245,12 +1245,12 @@ def active(config_name):
     data = request.get_json()
     peer_id = data['id']
 
-    result = g.cur.execute("SELECT active FROM "+ config_name + " WHERE id = ?", (peer_id,))
+    result = g.cur.execute("SELECT active FROM "+ config_name + " WHERE id = ?", (peer_id,)).fetchone()
 
-    if result.fetchone() is None:
+    if result is None:
         print("empty")
     else:
-        if result.fetchone()[0] == 1:
+        if result[0] == 1:
             status_active = 0
         else:
             status_active = 1
