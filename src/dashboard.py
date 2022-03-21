@@ -1280,9 +1280,6 @@ def active(config_name):
 
                 status = subprocess.check_output(f"wg set {config_name} peer {peer_id} allowed-ips {ip_revoked}", shell=True, stderr=subprocess.STDOUT)
                 status = subprocess.check_output("wg-quick save " + config_name, shell=True, stderr=subprocess.STDOUT)
-
-            sql = "UPDATE " + config_name + " SET endpoint_allowed_ip = ?, active = ? WHERE id = ?"
-            g.cur.execute(sql, ('0.0.0.0/0', status_active, peer_id))
         else:
             # wg_command = ["wg", "set", config_name]
             # wg_command.append("peer")
@@ -1302,11 +1299,11 @@ def active(config_name):
                             """
                 g.cur.execute(sql, new_data)
 
-            # sql = "UPDATE " + config_name + "_peers_revoked SET endpoint_allowed_ip = ?, active = ? WHERE id = ?"
-            # g.cur.execute(sql, ('0.0.0.0/0', status_active, peer_id))
-
             status = subprocess.check_output(f"wg set {config_name} peer {peer_id} allowed-ips 10.7.0.4/1", shell=True, stderr=subprocess.STDOUT)
             status = subprocess.check_output("wg-quick save " + config_name, shell=True, stderr=subprocess.STDOUT)
+
+        sql = "UPDATE " + config_name + " SET active = ? WHERE id = ?"
+        g.cur.execute(sql, (status_active, peer_id))
 
         return 'ok'
 
