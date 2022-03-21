@@ -1074,18 +1074,6 @@ def switch(config_name):
             return redirect('/')
     return redirect(request.referrer)
 
-
-@app.route('/active', methods=['POST'])
-def active():
-    """
-    active
-    @return: String
-    """
-
-    data = request.get_json()
-
-    return data['id']
-
 @app.route('/add_peer_bulk/<config_name>', methods=['POST'])
 def add_peer_bulk(config_name):
     """
@@ -1247,6 +1235,28 @@ def remove_peer(config_name):
             return exc.output.strip()
         return "true"
 
+@app.route('/active/<config_name>', methods=['POST'])
+def active(config_name):
+    """
+    active
+    @return: String
+    """
+
+    data = request.get_json()
+    peer_id = data['id']
+
+    result = g.cur.execute("SELECT active FROM "+ config_name + " WHERE id = ?", (peer_id,))
+
+    if result.fetchone() is None:
+        print("empty")
+    else:
+        if result[0] == 1:
+            status_active = 0
+        else:
+            status_active = 1
+            sql = "UPDATE " + config_name + " SET active = ? WHERE id = ?"
+            g.cur.execute(sql, (status_active, peer_id))
+            print("ok")
 
 @app.route('/save_peer_setting/<config_name>', methods=['POST'])
 def save_peer_setting(config_name):

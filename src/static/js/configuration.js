@@ -106,7 +106,7 @@
                 let peer_latest_handshake = '<div class="col-sm"> <small class="text-muted"><strong>LATEST HANDSHAKE</strong></small> <h6 style="text-transform: uppercase;">'+peer.latest_handshake+'</h6> </div>';
                 let peer_endpoint = '<div class="col-sm"><small class="text-muted"><strong>END POINT</strong></small><h6 style="text-transform: uppercase;">'+peer.endpoint+'</h6></div>';
 
-                let active_status_switch = (parseInt(peer.active) === 1) ? '<label data-id="'+peer.id+'" class="switch-button switch-active"><input data-id="'+peer.id+'" type="checkbox" checked><span class="slider round"></span></label>' : '<label data-id="'+peer.id+'" class="switch-button switch-active"><input data-id="'+peer.id+'" type="checkbox"><span class="slider round"></span></label>';
+                let active_status_switch = (parseInt(peer.active) === 1) ? '<label data-id="'+peer.id+'" data-config_name="'+response.name+'" class="switch-button switch-active"><input type="checkbox" checked><span class="slider round"></span></label>' : '<label data-id="'+peer.id+'" data-config_name="'+response.name+'" data-config_name="'+config_name+'" class="switch-button switch-active"><input type="checkbox"><span class="slider round"></span></label>';
 
                 let peer_control = '<div class="col-sm"><hr><div class="button-group" style="display:flex"><button type="button" class="btn btn-outline-primary btn-setting-peer btn-control" id="'+peer.id+'" data-toggle="modal"><i class="bi bi-gear-fill" data-toggle="tooltip" data-placement="bottom" title="Peer Settings"></i></button> <button type="button" class="btn btn-outline-danger btn-delete-peer btn-control" id="'+peer.id+'" data-toggle="modal"><i class="bi bi-x-circle-fill" data-toggle="tooltip" data-placement="bottom" title="Delete Peer"></i></button>' + active_status_switch;
 
@@ -562,15 +562,17 @@ document.querySelector(".info").addEventListener("click", (event) => {
 $body.on('change', '.switch-active', function (e) {
 
     const id = $(this).data('id');
+    const config_name = $(this).data('config_name');
 
     $.ajax({
         type: "POST",
-        url: "/active",
+        url: "/active/" + config_name,
         headers:{
             "Content-Type": "application/json"
         },
         data: JSON.stringify({
-            "id":id
+            "id":id,
+            "config_name":config_name,
         }),
         success: function (data) {
             console.log(data);
