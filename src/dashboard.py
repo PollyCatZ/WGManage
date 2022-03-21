@@ -1075,6 +1075,17 @@ def switch(config_name):
     return redirect(request.referrer)
 
 
+@app.route('/active', methods=['POST'])
+def active():
+    """
+    active
+    @return: String
+    """
+
+    data = request.get_json()
+
+    return data['id']
+
 @app.route('/add_peer_bulk/<config_name>', methods=['POST'])
 def add_peer_bulk(config_name):
     """
