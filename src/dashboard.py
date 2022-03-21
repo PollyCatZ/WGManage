@@ -1247,16 +1247,19 @@ def active(config_name):
 
     result = g.cur.execute("SELECT active FROM "+ config_name + " WHERE id = ?", (peer_id,)).fetchone()
 
-    if result is None:
-        print("empty")
+    if result[0] == 1:
+        status_active = 0
     else:
-        if result[0] == 1:
-            status_active = 0
-        else:
-            status_active = 1
-            sql = "UPDATE " + config_name + " SET active = ? WHERE id = ?"
-            g.cur.execute(sql, (status_active, peer_id))
-            print("ok")
+        status_active = 1
+
+    try:
+        sql = "UPDATE " + config_name + " SET active = ? WHERE id = ?"
+        g.cur.execute(sql, (status_active, peer_id))
+        return 'ok'
+
+    except subprocess.CalledProcessError as exc:
+        return jsonify({"status": "failed", "msg": str(exc.output.decode("UTF-8").strip())})
+
 
 @app.route('/save_peer_setting/<config_name>', methods=['POST'])
 def save_peer_setting(config_name):
