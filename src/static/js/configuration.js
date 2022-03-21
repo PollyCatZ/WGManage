@@ -561,8 +561,9 @@ document.querySelector(".info").addEventListener("click", (event) => {
 
 $(document).on('click', '.switch-active', function (e) {
     e.preventDefault();
+    const id = $(this).attr('id');
 
-    const id = $(this).data('id');
+    console.log(id);
 });
 
 /**
