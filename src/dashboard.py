@@ -1284,8 +1284,7 @@ def active(config_name):
 
     try:
         if status_active == 1:
-
-            if len(peers_revoked) == 1:
+            if peers_revoked is not None:
                 ip_revoked = peers_revoked[0]
                 g.cur.execute("DELETE FROM " + config_name + "_peers_revoked WHERE id = ?", (peer_id,))
 
