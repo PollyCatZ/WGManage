@@ -1122,7 +1122,7 @@ def add_peer_bulk(config_name):
     wg_command = ["wg", "set", config_name]
     sql_command = []
     for i in range(amount):
-        keys[i]['name'] = f"{config_name}_{datetime.now().strftime('%m%d%Y%H%M%S')}_Peer_{(i + 1)}"
+        keys[i]['name'] = f"{config_name}_{datetime.now().strftime('%H%M%S')}_OknoVPN_{(i + 1)}"
         wg_command.append("peer")
         wg_command.append(keys[i]['publicKey'])
         keys[i]['allowed_ips'] = ips.pop(0)
@@ -1281,25 +1281,17 @@ def active(config_name):
                 status = subprocess.check_output(f"wg set {config_name} peer {peer_id} allowed-ips {ip_revoked}", shell=True, stderr=subprocess.STDOUT)
                 status = subprocess.check_output("wg-quick save " + config_name, shell=True, stderr=subprocess.STDOUT)
         else:
-            # wg_command = ["wg", "set", config_name]
-            # wg_command.append("peer")
-            # wg_command.append(peer_id)
-            # wg_command.append("remove")
-            # remove_wg = subprocess.check_output(" ".join(wg_command), shell=True, stderr=subprocess.STDOUT)
-            # save_wg = subprocess.check_output(f"wg-quick save {config_name}", shell=True, stderr=subprocess.STDOUT)
+            new_data = {
+                "id": peer_id,
+                "allowed_ip": allowed_ips,
+            }
+            sql = f"""
+                        INSERT INTO {config_name}_peers_revoked
+                            VALUES (:id, :allowed_ip);
+                        """
+            g.cur.execute(sql, new_data)
 
-            if len(peers_revoked) == 0:
-                new_data = {
-                    "id": peer_id,
-                    "allowed_ip": allowed_ips,
-                }
-                sql = f"""
-                            INSERT INTO {config_name} _peers_revoked
-                                VALUES (:id, :allowed_ip);
-                            """
-                g.cur.execute(sql, new_data)
-
-            status = subprocess.check_output(f"wg set {config_name} peer {peer_id} allowed-ips 10.7.0.4/1", shell=True, stderr=subprocess.STDOUT)
+            status = subprocess.check_output(f"wg set {config_name} peer {peer_id} allowed-ips 127.0.0.8/32", shell=True, stderr=subprocess.STDOUT)
             status = subprocess.check_output("wg-quick save " + config_name, shell=True, stderr=subprocess.STDOUT)
 
         sql = "UPDATE " + config_name + " SET active = ? WHERE id = ?"
