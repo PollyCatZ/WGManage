@@ -295,7 +295,6 @@ def get_endpoint(config_name):
         count += 2
 
 
-
 def get_allowed_ip(conf_peer_data, config_name):
     """
     Get allowed ips from all peers of a configuration
@@ -323,6 +322,7 @@ def get_all_peers_data(config_name):
             result = g.cur.execute(
                 "SELECT * FROM %s WHERE id='%s'" % (config_name, conf_peer_data['Peers'][i]["PublicKey"])).fetchall()
             if len(result) == 0:
+
                 new_data = {
                     "id": conf_peer_data['Peers'][i]['PublicKey'],
                     "private_key": "",
@@ -346,8 +346,10 @@ def get_all_peers_data(config_name):
                     "preshared_key": "",
                     "active": "1",
                 }
+
                 if "PresharedKey" in conf_peer_data['Peers'][i].keys():
                     new_data["preshared_key"] = conf_peer_data['Peers'][i]["PresharedKey"]
+
                 sql = f"""
                 INSERT INTO {config_name} 
                     VALUES (:id, :private_key, :DNS, :endpoint_allowed_ip, :name, :total_receive, :total_sent, 
@@ -1145,13 +1147,17 @@ def add_peer_bulk(config_name):
         status = subprocess.check_output(" ".join(wg_command), shell=True, stderr=subprocess.STDOUT)
         status = subprocess.check_output("wg-quick save " + config_name, shell=True, stderr=subprocess.STDOUT)
         get_all_peers_data(config_name)
+
         if enable_preshared_key:
             for i in keys:
                 os.remove(i['psk_file'])
+
         for i in range(len(sql_command)):
             sql_command[i] = "".join(sql_command[i])
         g.cur.executescript("; ".join(sql_command))
+
         return "true"
+
     except subprocess.CalledProcessError as exc:
         return exc.output.strip()
 
@@ -1240,7 +1246,7 @@ def remove_peer(config_name):
             sql_command.append("DELETE FROM " + config_name + " WHERE id = '" + delete_key + "';")
 
             peers_revoked = g.cur.execute("SELECT allowed_ip FROM " + config_name + "_peers_revoked WHERE id = ?", (delete_key,)).fetchone()
-            if len(peers_revoked) == 1:
+            if peers_revoked is not None:
                 sql_command.append("DELETE FROM " + config_name + "_peers_revoked WHERE id = '" + delete_key + "';")
 
             wg_command.append("peer")
