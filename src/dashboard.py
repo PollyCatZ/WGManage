@@ -1122,7 +1122,7 @@ def add_peer_bulk(config_name):
     wg_command = ["wg", "set", config_name]
     sql_command = []
     for i in range(amount):
-        keys[i]['name'] = f"{config_name}_{datetime.now().strftime('%H%M%S')}_OknoVPN_{(i + 1)}"
+        keys[i]['name'] = f"OknoVPN_{(i + 1)}_{datetime.now().strftime('%H%M%S')}"
         wg_command.append("peer")
         wg_command.append(keys[i]['publicKey'])
         keys[i]['allowed_ips'] = ips.pop(0)
