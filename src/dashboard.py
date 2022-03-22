@@ -1238,6 +1238,11 @@ def remove_peer(config_name):
             if delete_key not in keys:
                 return "This key does not exist"
             sql_command.append("DELETE FROM " + config_name + " WHERE id = '" + delete_key + "';")
+
+            peers_revoked = g.cur.execute("SELECT allowed_ip FROM " + config_name + "_peers_revoked WHERE id = ?", (delete_key,)).fetchone()
+            if len(peers_revoked) == 1:
+                sql_command.append("DELETE FROM " + config_name + "_peers_revoked WHERE id = '" + delete_key + "';")
+
             wg_command.append("peer")
             wg_command.append(delete_key)
             wg_command.append("remove")
